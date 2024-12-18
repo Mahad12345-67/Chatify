@@ -9,56 +9,77 @@ const Register = ({ csrfToken }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    fetch("https://chatify-api.up.railway.app/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
-      },
-      body: JSON.stringify({ username, password, email }),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Username or email already exists");
-        }
+    try {
+      const response = await fetch("https://chatify-api.up.railway.app/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ username, password, email }),
+      });
 
-        localStorage.setItem("username", username);
-        localStorage.setItem("email", email);
-        navigate("/login", { state: { message: "Registration successful" } });
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setIsLoading(false));
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Username or email already exists");
+
+      navigate("/login", { state: { message: "Registration successful" } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="bg-cover bg-center min-h-screen flex items-center justify-center">
-      <div className="bg-white bg-opacity-60 backdrop-blur-lg p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-light text-center mb-8 text-white tracking-wide">
-          REGISTER
-        </h1>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        <p className="text-green-500 text-center mb-4">
-          Already have an account?{" "}
-          <NavLink to="/login" className="text-blue-500 underline">
-            Login
-          </NavLink>
-        </p>
-
-        {isLoading ? (
-          <p className="text-center text-white">Registering...</p>
-        ) : (
-          <form onSubmit={handleRegister} className="space-y-4">
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <button type="submit">Register</button>
-          </form>
-        )}
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="card shadow p-4" style={{ width: "400px" }}>
+        <h2 className="text-center mb-4">Registrera</h2>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <form onSubmit={handleRegister}>
+          <div className="mb-3">
+            <label htmlFor="username" className="form-label">Användarnamn</label>
+            <input
+              type="text"
+              className="form-control"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="email" className="form-label">E-post</label>
+            <input
+              type="email"
+              className="form-control"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="password" className="form-label">Lösenord</label>
+            <input
+              type="password"
+              className="form-control"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-success w-100" disabled={isLoading}>
+            {isLoading ? "Registrerar..." : "Registrera"}
+          </button>
+        </form>
+        <NavLink to="/login" className="btn btn-link mt-3 w-100">
+          Har du redan ett konto? Logga in
+        </NavLink>
       </div>
     </div>
   );

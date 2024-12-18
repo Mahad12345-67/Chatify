@@ -1,32 +1,31 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-function SideNav({ token, setToken }) {
+function SideNav({ setToken }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const username = localStorage.getItem("username");
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    setToken('');
-    navigate('/login');
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    setToken("");
+    navigate("/login");
   };
 
+  const isChatPage = location.pathname === "/chat";
+
   return (
-    <div style={{
-      width: '100%',
-      height: '60px',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      backgroundColor: '#f4f4f4',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '0 20px',
-      boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
-      zIndex: 1000,
-    }}>
-      <button onClick={handleLogout}>Logout</button>
+    <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+      {isChatPage && username && (
+        <>
+          <h1 className="text-start m-0">Välkommen {username}!</h1>
+          <button className="btn btn-danger" onClick={handleLogout}>
+            Logga ut
+          </button>
+        </>
+      )}
     </div>
   );
 }

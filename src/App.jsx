@@ -9,6 +9,12 @@ const ProtectedRoute = ({ element, token }) => {
   return token ? element : <Navigate to="/login" />;
 };
 
+const LoadingComponent = () => (
+  <div className="loading">
+    <p>Loading...</p>
+  </div>
+);
+
 const ErrorComponent = ({ error }) => {
   if (!error) return null;
   return (
@@ -18,15 +24,12 @@ const ErrorComponent = ({ error }) => {
   );
 };
 
-const LoadingComponent = () => (
-  <div className="loading">
-    <p>Loading...</p>
-  </div>
-);
-
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [userId, setUserId] = useState(localStorage.getItem('userId') || '');
+  const [currentConversation, setCurrentConversation] = useState(
+    localStorage.getItem('currentConversation') || ''
+  );
   const [csrfToken, setCsrfToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -37,12 +40,14 @@ const App = () => {
   }, [token, userId]);
 
   useEffect(() => {
+    localStorage.setItem('currentConversation', currentConversation);
+  }, [currentConversation]);
+
+  useEffect(() => {
     const fetchCsrfToken = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://chatify-api.up.railway.app/csrf', {
-          method: 'PATCH',
-        });
+        const response = await fetch('https://chatify-api.up.railway.app/csrf', { method: 'PATCH' });
         if (!response.ok) throw new Error('Failed to fetch CSRF token');
         const data = await response.json();
         setCsrfToken(data.csrfToken);
@@ -61,13 +66,32 @@ const App = () => {
   return (
     <div>
       <ErrorComponent error={error} />
+
       <Router>
-        {token && <SideNav token={token} setToken={setToken} />}
+        <SideNav token={token} setToken={setToken} userId={userId} />
         <Routes>
           <Route path="/" element={<Navigate to={token ? "/chat" : "/login"} />} />
-          <Route path="/register" element={<Register csrfToken={csrfToken} setToken={setToken} setUserId={setUserId} />} />
-          <Route path="/login" element={<Login setToken={setToken} setUserId={setUserId} csrfToken={csrfToken} />} />
-          <Route path="/chat" element={<ProtectedRoute element={<Chat token={token} userId={userId} />} token={token} />} />
+          <Route path="/register" element={<Register csrfToken={csrfToken} />} />
+          <Route
+            path="/login"
+            element={<Login setToken={setToken} setUserId={setUserId} csrfToken={csrfToken} />}
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute
+                element={
+                  <Chat
+                    token={token}
+                    userId={userId}
+                    currentConversation={currentConversation}
+                    setCurrentConversation={setCurrentConversation}
+                  />
+                }
+                token={token}
+              />
+            }
+          />
           <Route path="*" element={<Navigate to={token ? "/chat" : "/login"} />} />
         </Routes>
       </Router>
